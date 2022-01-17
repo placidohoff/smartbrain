@@ -4,34 +4,55 @@ import Navigation from './components/Navigation/Navigation';
 import Logo from './components/Logo/Logo';
 import ImageLinkForm from './components/Logo/ImageLinkForm/ImageLinkForm';
 import Rank from './components/Rank/Rank';
+import FaceRecognition from './components/FaceRecognition/FaceRecognition';
 import Particles from 'react-tsparticles';
+import Clarifai from 'clarifai'
+
+const app = new Clarifai.App({
+  apiKey: 'cc768333a086456ca8f0eba2c620850b'
+})
+
+const particlesInit = (main) => {
+  console.log(main);
+
+  // you can initialize the tsParticles instance (main) here, adding custom shapes or presets
+};
+
+const particlesLoaded = (container) => {
+  console.log(container);
+};
 
 class App extends Component {
   constructor(props) {
     super(props)
     this.state = {
-      input: 'test'
-    } 
+      input: '',
+      imageUrl: ''
+    }
   }
 
-   particlesInit = (main) => {
-    console.log(main);
 
-    // you can initialize the tsParticles instance (main) here, adding custom shapes or presets
-  };
 
-   particlesLoaded = (container) => {
-    console.log(container);
-  };
-
-   onInputChange = (event) => {
-    this.setState({input: event.target.value})
+  onInputChange = (event) => {
+    this.setState({ input: event.target.value })
   }
 
-   onSubmit = () => {
-    console.log('submit')
+  onSubmit = async () => {
+    await this.setState({ imageUrl: this.state.input })
+
+    app.models.predict(
+      Clarifai.FACE_DETECT_MODEL,
+      this.state.imageUrl)
+       .then(
+        function (response) {
+          console.log(response.outputs[0].data.regions[0].region_info.bounding_box)
+        },
+        function (err) {
+          console.log(err)
+        }
+      ).catch(err => console.log('Error'))
   }
-  
+
   render() {
     return (
       <>
@@ -129,7 +150,9 @@ class App extends Component {
           input={this.state.input}
           onSubmit={this.onSubmit}
         />
-        {/* <FaceRecognition /> */}
+        <FaceRecognition
+          imageUrl={this.state.imageUrl}
+        />
       </>
     );
   }
